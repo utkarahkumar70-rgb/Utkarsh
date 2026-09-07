@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Utkarsh Calculator</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #eef1f5;
+      padding: 15px;
+    }
+
+    .calculator {
+      width: 100%;
+      max-width: 430px;
+      background: #1d2025;
+      padding: 18px;
+      border-radius: 22px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.25);
+    }
+
+    .brand {
+      color: white;
+      text-align: center;
+      font-size: 25px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .display {
+      background: #0d0f12;
+      color: white;
+      border-radius: 14px;
+      padding: 15px;
+      min-height: 105px;
+      margin-bottom: 15px;
+      overflow: hidden;
+    }
+
+    #expression {
+      width: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: #aaa;
+      text-align: right;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    #result {
+      width: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: white;
+      text-align: right;
+      font-size: 32px;
+      font-weight: bold;
+    }
+
+    .top-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .mode {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: #30343b;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    button {
+      min-height: 58px;
+      border: none;
+      border-radius: 12px;
+      background: #30343b;
+      color: white;
+      font-size: 17px;
+      cursor: pointer;
+      transition: 0.12s;
+    }
+
+    button:hover {
+      filter: brightness(1.2);
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    .function {
+      background: #454a53;
+    }
+
+    .operator {
+      background: #555b65;
+    }
+
+    .danger {
+      background: #a53a3a;
+    }
+
+    .equal {
+      background: #276749;
+      grid-column: span 2;
+    }
+
+    .zero {
+      grid-column: span 2;
+    }
+
+    .history {
+      margin-top: 15px;
+      background: #0d0f12;
+      border-radius: 12px;
+      padding: 12px;
+      color: #ddd;
+      max-height: 130px;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+
+    .history-title {
+      font-weight: bold;
+      margin-bottom: 7px;
+      color: white;
+    }
+
+    .history-item {
+      padding: 5px 0;
+      border-bottom: 1px solid #292d33;
+    }
+
+    @media (max-width: 400px) {
+      button {
+        min-height: 52px;
+        font-size: 15px;
+      }
+
+      #result {
+        font-size: 27px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="calculator">
+
+    <div class="brand">🧮 Utkarsh Calculator</div>
+
+    <div class="display">
+      <input id="expression" readonly value="">
+      <input id="result" readonly value="0">
+    </div>
+
+    <div class="top-row">
+      <button class="mode" id="modeBtn" onclick="toggleMode()">DEG</button>
+      <button class="mode" onclick="clearHistory()">Clear History</button>
+    </div>
+
+    <div class="buttons">
+
+      <button class="function" onclick="add('sin(')">sin</button>
+      <button class="function" onclick="add('cos(')">cos</button>
+      <button class="function" onclick="add('tan(')">tan</button>
+      <button class="function" onclick="add('log(')">log</button>
+      <button class="function" onclick="add('ln(')">ln</button>
+
+      <button class="function" onclick="add('√(')">√</button>
+      <button class="function" onclick="add('^2')">x²</button>
+      <button class="function" onclick="add('^')">xʸ</button>
+      <button class="function" onclick="add('π')">π</button>
+      <button class="function" onclick="add('e')">e</button>
+
+      <button class="function" onclick="add('(')">(</button>
+      <button class="function" onclick="add(')')">)</button>
+      <button class="function" onclick="add('%')">%</button>
+      <button class="danger" onclick="backspace()">⌫</button>
+      <button class="danger" onclick="clearAll()">AC</button>
+
+      <button onclick="add('7')">7</button>
+      <button onclick="add('8')">8</button>
+      <button onclick="add('9')">9</button>
+      <button class="operator" onclick="add('÷')">÷</button>
+      <button class="operator" onclick="add('×')">×</button>
+
+      <button onclick="add('4')">4</button>
+      <button onclick="add('5')">5</button>
+      <button onclick="add('6')">6</button>
+      <button class="operator" onclick="add('-')">−</button>
+      <button class="operator" onclick="add('+')">+</button>
+
+      <button onclick="add('1')">1</button>
+      <button onclick="add('2')">2</button>
+      <button onclick="add('3')">3</button>
+      <button onclick="add('.')">.</button>
+      <button class="equal" onclick="calculate()">=</button>
+
+      <button class="zero" onclick="add('0')">0</button>
+      <button onclick="add('00')">00</button>
+
+    </div>
+
+    <div class="history" id="history">
+      <div class="history-title">History</div>
+    </div>
+
+  </div>
+
+
+<script>
+
+  let expression = "";
+  let degreeMode = true;
+
+  const expressionBox = document.getElementById("expression");
+  const resultBox = document.getElementById("result");
+  const modeBtn = document.getElementById("modeBtn");
+  const historyBox = document.getElementById("history");
+
+
+  function updateDisplay() {
+    expressionBox.value = expression;
+  }
+
+
+  function add(value) {
+    expression += value;
+    updateDisplay();
+  }
+
+
+  function clearAll() {
+    expression = "";
+    resultBox.value = "0";
+    updateDisplay();
+  }
+
+
+  function backspace() {
+    expression = expression.slice(0, -1);
+    updateDisplay();
+  }
+
+
+  function toggleMode() {
+    degreeMode = !degreeMode;
+    modeBtn.textContent = degreeMode ? "DEG" : "RAD";
+  }
+
+
+  function toRadians(x) {
+    return x * Math.PI / 180;
+  }
+
+
+  function sin(x) {
+    return Math.sin(degreeMode ? toRadians(x) : x);
+  }
+
+
+  function cos(x) {
+    return Math.cos(degreeMode ? toRadians(x) : x);
+  }
+
+
+  function tan(x) {
+    return Math.tan(degreeMode ? toRadians(x) : x);
+  }
+
+
+  function log(x) {
+    return Math.log10(x);
+  }
+
+
+  function ln(x) {
+    return Math.log(x);
+  }
+
+
+  function sqrt(x) {
+    return Math.sqrt(x);
+  }
+
+
+  function factorial(n) {
+    if (n < 0 || !Number.isInteger(n)) {
+      throw new Error("Invalid factorial");
+    }
+
+    let result = 1;
+
+    for (let i = 2; i <= n; i++) {
+      result *= i;
+    }
+
+    return result;
+  }
+
+
+  function prepareExpression(exp) {
+
+    exp = exp.replaceAll("π", "Math.PI");
+    exp = exp.replace(/\be\b/g, "Math.E");
+
+    exp = exp.replaceAll("×", "*");
+    exp = exp.replaceAll("÷", "/");
+
+    exp = exp.replaceAll("^2", "**2");
+    exp = exp.replaceAll("^", "**");
+
+    exp = exp.replaceAll("√", "sqrt");
+
+    exp = exp.replaceAll("%", "/100");
+
+    exp = exp.replace(/\bsin/g, "sin");
+    exp = exp.replace(/\bcos/g, "cos");
+    exp = exp.replace(/\btan/g, "tan");
+    exp = exp.replace(/\blog/g, "log");
+    exp = exp.replace(/\bln/g, "ln");
+
+    return exp;
+  }
+
+
+  function calculate() {
+
+    if (!expression) return;
+
+    try {
+
+      const prepared = prepareExpression(expression);
+
+      const answer = Function(
+        "sin",
+        "cos",
+        "tan",
+        "log",
+        "ln",
+        "sqrt",
+        "return " + prepared
+      )(sin, cos, tan, log, ln, sqrt);
+
+      if (!Number.isFinite(answer)) {
+        throw new Error("Invalid result");
+      }
+
+      const rounded =
+        Math.abs(answer) < 1e-12
+          ? 0
+          : Number(answer.toPrecision(12));
+
+      resultBox.value = rounded;
+
+      addHistory(expression, rounded);
+
+    } catch (error) {
+
+      resultBox.value = "Error";
+
+    }
+  }
+
+
+  function addHistory(exp, answer) {
+
+    const item = document.createElement("div");
+
+    item.className = "history-item";
+
+    item.textContent = exp + " = " + answer;
+
+    historyBox.appendChild(item);
+
+    historyBox.scrollTop = historyBox.scrollHeight;
+  }
+
+
+  function clearHistory() {
+
+    historyBox.innerHTML =
+      '<div class="history-title">History</div>';
+
+  }
+
+
+  document.addEventListener("keydown", function(event) {
+
+    const key = event.key;
+
+    if (
+      /[0-9.+\-*/()]/.test(key)
+    ) {
+
+      if (key === "*") add("×");
+      else if (key === "/") add("÷");
+      else add(key);
+
+    }
+
+    if (key === "Enter") {
+      calculate();
+    }
+
+    if (key === "Backspace") {
+      backspace();
+    }
+
+    if (key === "Escape") {
+      clearAll();
+    }
+
+  });
+
+</script>
+
+</body>
+</html>
