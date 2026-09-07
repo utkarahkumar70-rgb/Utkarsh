@@ -1,204 +1,368 @@
+
 let expression = "";
+
+let lastAnswer = 0;
+
 let degreeMode = true;
 
-const expressionBox = document.getElementById("expression");
-const resultBox = document.getElementById("result");
-const modeBtn = document.getElementById("modeBtn");
-const historyBox = document.getElementById("history");
+let inverseMode = false;
 
 
-// Display update
+const expressionDisplay =
+  document.getElementById("expression");
+
+const resultDisplay =
+  document.getElementById("result");
+
+const historyList =
+  document.getElementById("historyList");
+
+const angleBtn =
+  document.getElementById("angleBtn");
+
+const inverseBtn =
+  document.getElementById("inverseBtn");
+
+
+// --------------------------------
+// Display
+// --------------------------------
+
 function updateDisplay() {
-  expressionBox.value = expression;
+
+  expressionDisplay.textContent =
+    expression || "0";
 }
 
 
-// Add value to calculator
-function add(value) {
-  expression += value;
+// --------------------------------
+// Add text
+// --------------------------------
+
+function scientific(value) {
+
+  if (value === "EXP") {
+
+    expression += "e";
+
+  } else {
+
+    expression += value;
+
+  }
+
   updateDisplay();
 }
 
 
-// Clear everything
-function clearAll() {
-  expression = "";
-  resultBox.value = "0";
-  updateDisplay();
-}
+// --------------------------------
+// Backspace
+// --------------------------------
 
-
-// Delete last character
 function backspace() {
-  expression = expression.slice(0, -1);
+
+  expression =
+    expression.slice(0, -1);
+
   updateDisplay();
 }
 
 
-// DEG / RAD mode
-function toggleMode() {
+// --------------------------------
+// Clear
+// --------------------------------
+
+function clearCalculator() {
+
+  expression = "";
+
+  resultDisplay.textContent = "0";
+
+  updateDisplay();
+}
+
+
+// --------------------------------
+// DEG / RAD
+// --------------------------------
+
+function toggleAngle() {
+
   degreeMode = !degreeMode;
 
-  modeBtn.textContent = degreeMode ? "DEG" : "RAD";
+  angleBtn.textContent =
+    degreeMode ? "DEG" : "RAD";
 }
 
 
-// Convert degree to radians
-function toRadians(x) {
-  return x * Math.PI / 180;
+// --------------------------------
+// INV mode
+// --------------------------------
+
+function toggleInverse() {
+
+  inverseMode = !inverseMode;
+
+  inverseBtn.textContent =
+    inverseMode ? "INV ON" : "INV";
 }
 
 
-// Sine
-function sin(x) {
-  return Math.sin(
-    degreeMode ? toRadians(x) : x
-  );
-}
+// --------------------------------
+// Convert expression
+// --------------------------------
 
-
-// Cosine
-function cos(x) {
-  return Math.cos(
-    degreeMode ? toRadians(x) : x
-  );
-}
-
-
-// Tangent
-function tan(x) {
-  return Math.tan(
-    degreeMode ? toRadians(x) : x
-  );
-}
-
-
-// Log base 10
-function log(x) {
-  return Math.log10(x);
-}
-
-
-// Natural log
-function ln(x) {
-  return Math.log(x);
-}
-
-
-// Square root
-function sqrt(x) {
-  return Math.sqrt(x);
-}
-
-
-// Prepare expression
 function prepareExpression(exp) {
 
-  // Pi
-  exp = exp.replaceAll("π", "Math.PI");
-
-  // Euler's number
-  exp = exp.replace(/\be\b/g, "Math.E");
-
-  // Multiplication and division
+  // Multiplication symbols
   exp = exp.replaceAll("×", "*");
+
   exp = exp.replaceAll("÷", "/");
 
-  // Powers
-  exp = exp.replaceAll("^2", "**2");
-  exp = exp.replaceAll("^", "**");
+  // Constants
+  exp = exp.replaceAll("π", "pi");
 
-  // Square root
-  exp = exp.replaceAll("√", "sqrt");
+  // ANS
+  exp = exp.replaceAll(
+    "ans",
+    `(${lastAnswer})`
+  );
 
   // Percentage
-  exp = exp.replaceAll("%", "/100");
+  exp = exp.replace(
+    /(\d+(?:\.\d+)?)%/g,
+    "($1/100)"
+  );
 
   return exp;
 }
 
 
-// Calculate result
+// --------------------------------
+// Degree mode configuration
+// --------------------------------
+
+function createMathScope() {
+
+  const scope = {};
+
+  scope.pi = Math.PI;
+
+  scope.e = Math.E;
+
+  scope.ans = lastAnswer;
+
+
+  // Normal trig
+  scope.sin = function(x) {
+
+    return degreeMode
+      ? Math.sin(x * Math.PI / 180)
+      : Math.sin(x);
+  };
+
+
+  scope.cos = function(x) {
+
+    return degreeMode
+      ? Math.cos(x * Math.PI / 180)
+      : Math.cos(x);
+  };
+
+
+  scope.tan = function(x) {
+
+    return degreeMode
+      ? Math.tan(x * Math.PI / 180)
+      : Math.tan(x);
+  };
+
+
+  // Inverse trig
+  scope.asin = function(x) {
+
+    const result = Math.asin(x);
+
+    return degreeMode
+      ? result * 180 / Math.PI
+      : result;
+  };
+
+
+  scope.acos = function(x) {
+
+    const result = Math.acos(x);
+
+    return degreeMode
+      ? result * 180 / Math.PI
+      : result;
+  };
+
+
+  scope.atan = function(x) {
+
+    const result = Math.atan(x);
+
+    return degreeMode
+      ? result * 180 / Math.PI
+      : result;
+  };
+
+
+  return scope;
+}
+
+
+// --------------------------------
+// Calculate
+// --------------------------------
+
 function calculate() {
 
-  if (!expression) {
-    return;
-  }
+  if (!expression) return;
+
 
   try {
 
-    const prepared = prepareExpression(expression);
-
-    const answer = Function(
-      "sin",
-      "cos",
-      "tan",
-      "log",
-      "ln",
-      "sqrt",
-      "return " + prepared
-    )(
-      sin,
-      cos,
-      tan,
-      log,
-      ln,
-      sqrt
-    );
+    let exp =
+      prepareExpression(expression);
 
 
-    // Check invalid result
-    if (!Number.isFinite(answer)) {
-      throw new Error("Invalid result");
+    // Inverse mode
+    if (inverseMode) {
+
+      exp = exp
+        .replaceAll("sin(", "asin(")
+        .replaceAll("cos(", "acos(")
+        .replaceAll("tan(", "atan(");
+
     }
 
 
-    // Round long decimal answers
-    const rounded =
-      Math.abs(answer) < 1e-12
-        ? 0
-        : Number(answer.toPrecision(12));
+    const scope =
+      createMathScope();
 
 
-    resultBox.value = rounded;
+    const result =
+      math.evaluate(exp, scope);
 
-    addHistory(expression, rounded);
 
-  } catch (error) {
+    if (
+      result === undefined ||
+      result === null
+    ) {
 
-    resultBox.value = "Error";
+      throw new Error("Invalid");
+
+    }
+
+
+    let finalResult;
+
+
+    // Complex number support
+    if (
+      typeof result === "object" &&
+      result !== null &&
+      "re" in result
+    ) {
+
+      finalResult =
+        math.format(
+          result,
+          {
+            precision: 14
+          }
+        );
+
+    } else {
+
+      finalResult =
+        math.format(
+          result,
+          {
+            precision: 14
+          }
+        );
+
+    }
+
+
+    resultDisplay.textContent =
+      finalResult;
+
+
+    lastAnswer = result;
+
+
+    addHistory(
+      expression,
+      finalResult
+    );
+
+  }
+
+  catch (error) {
+
+    resultDisplay.textContent =
+      "Error";
 
   }
 }
 
 
-// Add calculation to history
-function addHistory(exp, answer) {
+// --------------------------------
+// History
+// --------------------------------
 
-  const item = document.createElement("div");
+function addHistory(
+  exp,
+  result
+) {
 
-  item.className = "history-item";
+  const item =
+    document.createElement("div");
+
+
+  item.className =
+    "history-item";
+
 
   item.textContent =
-    exp + " = " + answer;
+    `${exp} = ${result}`;
 
-  historyBox.appendChild(item);
 
-  historyBox.scrollTop =
-    historyBox.scrollHeight;
+  historyList.prepend(item);
+
+
+  // Keep last 30 calculations
+  while (
+    historyList.children.length > 30
+  ) {
+
+    historyList.removeChild(
+      historyList.lastChild
+    );
+
+  }
 }
 
 
+// --------------------------------
 // Clear history
+// --------------------------------
+
 function clearHistory() {
 
-  historyBox.innerHTML =
-    '<div class="history-title">History</div>';
+  historyList.innerHTML = "";
 
 }
 
 
-// Keyboard support
+// --------------------------------
+// Keyboard
+// --------------------------------
+
 document.addEventListener(
   "keydown",
   function(event) {
@@ -206,46 +370,85 @@ document.addEventListener(
     const key = event.key;
 
 
-    // Numbers and basic operators
-    if (/[0-9.+\-*/()]/.test(key)) {
+    if (
+      /^[0-9.]$/.test(key)
+    ) {
 
-      if (key === "*") {
+      scientific(key);
 
-        add("×");
-
-      } else if (key === "/") {
-
-        add("÷");
-
-      } else {
-
-        add(key);
-
-      }
+      return;
     }
 
 
-    // Enter = calculate
+    if (key === "+") {
+
+      scientific("+");
+
+      return;
+    }
+
+
+    if (key === "-") {
+
+      scientific("-");
+
+      return;
+    }
+
+
+    if (key === "*") {
+
+      scientific("×");
+
+      return;
+    }
+
+
+    if (key === "/") {
+
+      scientific("÷");
+
+      return;
+    }
+
+
+    if (key === "(") {
+
+      scientific("(");
+
+      return;
+    }
+
+
+    if (key === ")") {
+
+      scientific(")");
+
+      return;
+    }
+
+
     if (key === "Enter") {
 
       calculate();
 
+      return;
     }
 
 
-    // Backspace
     if (key === "Backspace") {
 
       backspace();
 
+      return;
     }
 
 
-    // Escape = clear
     if (key === "Escape") {
 
-      clearAll();
+      clearCalculator();
 
+      return;
     }
 
   }
